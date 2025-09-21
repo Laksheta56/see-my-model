@@ -22,6 +22,13 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
+        },
+        ml: {
+          success: "hsl(var(--ml-success))",
+          warning: "hsl(var(--ml-warning))",
+          error: "hsl(var(--ml-error))",
+          info: "hsl(var(--ml-info))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -62,6 +69,14 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      backgroundImage: {
+        "gradient-primary": "var(--gradient-primary)",
+        "gradient-data": "var(--gradient-data)",
+        "gradient-prediction": "var(--gradient-prediction)",
+      },
+      backdropBlur: {
+        glass: "20px",
       },
       keyframes: {
         "accordion-down": {

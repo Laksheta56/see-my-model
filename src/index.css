@@ -2,9 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ML Visualization Design System - Modern Data Science Theme */
 
 @layer base {
   :root {
@@ -17,11 +15,28 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* ML-focused color palette */
+    --primary: 240 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 250 100% 70%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 260 100% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Data visualization colors */
+    --ml-success: 142 76% 36%;
+    --ml-warning: 38 92% 50%;
+    --ml-error: 0 84% 60%;
+    --ml-info: 221 83% 53%;
+
+    /* Gradients for ML theme */
+    --gradient-primary: linear-gradient(135deg, hsl(240 100% 60%), hsl(250 100% 70%));
+    --gradient-data: linear-gradient(90deg, hsl(240 100% 60%), hsl(260 100% 55%), hsl(280 100% 50%));
+    --gradient-prediction: linear-gradient(45deg, hsl(142 76% 36%), hsl(160 84% 39%));
+    
+    /* Glass morphism effects */
+    --glass-bg: 240 100% 99% / 0.1;
+    --glass-border: 240 100% 95% / 0.2;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -65,8 +80,21 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 240 100% 70%;
     --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-glow: 250 100% 80%;
+
+    --ml-success: 142 76% 50%;
+    --ml-warning: 38 92% 60%;
+    --ml-error: 0 84% 70%;
+    --ml-info: 221 83% 63%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(240 100% 70%), hsl(250 100% 80%));
+    --gradient-data: linear-gradient(90deg, hsl(240 100% 70%), hsl(260 100% 65%), hsl(280 100% 60%));
+    --gradient-prediction: linear-gradient(45deg, hsl(142 76% 50%), hsl(160 84% 49%));
+    
+    --glass-bg: 240 100% 20% / 0.1;
+    --glass-border: 240 100% 40% / 0.2;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
