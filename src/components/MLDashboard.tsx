@@ -13,10 +13,32 @@ interface PredictionResult {
   probability: number;
   prediction: string;
   confidence: number;
+  anomaly_flag: boolean;
+  triggered_factors: string[];
+}
+
+interface AnomalyFactors {
+  deviation_score: number;
+  time_since_last_activity: number;
+  signal_status: string;
+  altitude_change: number;
+  heart_rate: number;
+  oxygen_saturation: number;
+  body_temperature: number;
+  fall_detected: boolean;
 }
 
 const MLDashboard = () => {
-  const [embeddings, setEmbeddings] = useState<string>("");
+  const [factors, setFactors] = useState<AnomalyFactors>({
+    deviation_score: 0,
+    time_since_last_activity: 0,
+    signal_status: "normal",
+    altitude_change: 0,
+    heart_rate: 70,
+    oxygen_saturation: 98,
+    body_temperature: 36.5,
+    fall_detected: false
+  });
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [modelStats] = useState({
@@ -27,32 +49,35 @@ const MLDashboard = () => {
   });
 
   const handlePredict = async () => {
-    if (!embeddings.trim()) {
-      toast.error("Please enter embedding values");
-      return;
-    }
-
     setIsLoading(true);
     
     try {
-      // Parse embeddings input
-      const embeddingArray = embeddings.split(',').map(val => parseFloat(val.trim()));
+      // Check anomaly criteria
+      const triggeredFactors: string[] = [];
       
-      if (embeddingArray.some(isNaN)) {
-        throw new Error("Invalid embedding format. Please use comma-separated numbers.");
-      }
+      if (factors.deviation_score > 200) triggeredFactors.push("Route deviation");
+      if (factors.time_since_last_activity > 30) triggeredFactors.push("Prolonged inactivity");
+      if (factors.signal_status === "silent" && factors.time_since_last_activity > 20) triggeredFactors.push("Silent behavior");
+      if (factors.signal_status === "missing") triggeredFactors.push("Missing signal");
+      if (factors.signal_status === "distress") triggeredFactors.push("Distress signal");
+      if (factors.altitude_change < -15) triggeredFactors.push("Sudden altitude drop");
+      if (factors.heart_rate < 45 || factors.heart_rate > 150) triggeredFactors.push("Heart rate anomaly");
+      if (factors.oxygen_saturation < 90) triggeredFactors.push("Oxygen anomaly");
+      if (factors.body_temperature > 38.5) triggeredFactors.push("Temperature anomaly");
+      if (factors.fall_detected) triggeredFactors.push("Fall detected");
 
-      // Simulate model prediction (replace with actual API call to Supabase Edge Function)
+      // Simulate model prediction
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Mock prediction result
-      const mockProbability = 0.75 + Math.random() * 0.2;
-      const mockPrediction = mockProbability > 0.5 ? "Positive" : "Negative";
+      const anomaly_flag = triggeredFactors.length > 0;
+      const mockProbability = anomaly_flag ? 0.85 + Math.random() * 0.15 : 0.15 + Math.random() * 0.3;
       
       setPrediction({
         probability: mockProbability,
-        prediction: mockPrediction,
-        confidence: mockProbability
+        prediction: anomaly_flag ? "Anomaly Detected" : "Normal Behavior",
+        confidence: mockProbability,
+        anomaly_flag,
+        triggered_factors: triggeredFactors
       });
 
       toast.success("Prediction completed successfully!");
@@ -64,12 +89,17 @@ const MLDashboard = () => {
   };
 
   const loadSampleData = () => {
-    // Sample embedding vector (384 dimensions typical for some models)
-    const sampleEmbeddings = Array.from({ length: 10 }, () => 
-      (Math.random() * 2 - 1).toFixed(4)
-    ).join(', ');
-    setEmbeddings(sampleEmbeddings);
-    toast.success("Sample embedding data loaded");
+    setFactors({
+      deviation_score: 250,
+      time_since_last_activity: 35,
+      signal_status: "silent",
+      altitude_change: -20,
+      heart_rate: 160,
+      oxygen_saturation: 85,
+      body_temperature: 39.2,
+      fall_detected: true
+    });
+    toast.success("Sample anomaly data loaded");
   };
 
   return (
@@ -134,24 +164,75 @@ const MLDashboard = () => {
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                Input Embeddings
+                Anomaly Detection Factors
               </CardTitle>
               <CardDescription className="text-white/70">
-                Enter your embedding vector for prediction
+                Enter the monitoring data for anomaly detection
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="embeddings" className="text-white">
-                  Embedding Vector (comma-separated)
-                </Label>
-                <textarea
-                  id="embeddings"
-                  value={embeddings}
-                  onChange={(e) => setEmbeddings(e.target.value)}
-                  placeholder="0.1234, -0.5678, 0.9012, ..."
-                  className="w-full h-24 px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white placeholder-white/50 resize-none"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="deviation" className="text-white">Route Deviation Score</Label>
+                  <Input
+                    id="deviation"
+                    type="number"
+                    value={factors.deviation_score}
+                    onChange={(e) => setFactors({...factors, deviation_score: Number(e.target.value)})}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="inactivity" className="text-white">Inactivity (min)</Label>
+                  <Input
+                    id="inactivity"
+                    type="number"
+                    value={factors.time_since_last_activity}
+                    onChange={(e) => setFactors({...factors, time_since_last_activity: Number(e.target.value)})}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="heart_rate" className="text-white">Heart Rate (bpm)</Label>
+                  <Input
+                    id="heart_rate"
+                    type="number"
+                    value={factors.heart_rate}
+                    onChange={(e) => setFactors({...factors, heart_rate: Number(e.target.value)})}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="oxygen" className="text-white">Oxygen Saturation (%)</Label>
+                  <Input
+                    id="oxygen"
+                    type="number"
+                    value={factors.oxygen_saturation}
+                    onChange={(e) => setFactors({...factors, oxygen_saturation: Number(e.target.value)})}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="temp" className="text-white">Body Temperature (°C)</Label>
+                  <Input
+                    id="temp"
+                    type="number"
+                    step="0.1"
+                    value={factors.body_temperature}
+                    onChange={(e) => setFactors({...factors, body_temperature: Number(e.target.value)})}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="altitude" className="text-white">Altitude Change (m)</Label>
+                  <Input
+                    id="altitude"
+                    type="number"
+                    value={factors.altitude_change}
+                    onChange={(e) => setFactors({...factors, altitude_change: Number(e.target.value)})}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
               </div>
               
               <div className="flex gap-2">
@@ -160,7 +241,7 @@ const MLDashboard = () => {
                   variant="outline"
                   className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
                 >
-                  Load Sample
+                  Load Anomaly Sample
                 </Button>
                 <Button
                   onClick={handlePredict}
@@ -170,12 +251,12 @@ const MLDashboard = () => {
                   {isLoading ? (
                     <>
                       <Zap className="h-4 w-4 mr-2 animate-spin" />
-                      Predicting...
+                      Analyzing...
                     </>
                   ) : (
                     <>
                       <Play className="h-4 w-4 mr-2" />
-                      Predict
+                      Detect Anomaly
                     </>
                   )}
                 </Button>
@@ -204,14 +285,30 @@ const MLDashboard = () => {
                     <Badge 
                       variant="secondary" 
                       className={`text-white ${
-                        prediction.prediction === 'Positive' 
-                          ? 'bg-ml-success' 
-                          : 'bg-ml-error'
+                        prediction.anomaly_flag 
+                          ? 'bg-ml-error' 
+                          : 'bg-ml-success'
                       }`}
                     >
-                      {(prediction.probability * 100).toFixed(1)}% probability
+                      {(prediction.probability * 100).toFixed(1)}% confidence
                     </Badge>
                   </div>
+                  
+                  {prediction.triggered_factors.length > 0 && (
+                    <>
+                      <Separator className="bg-white/20" />
+                      <div className="space-y-2">
+                        <h4 className="text-white font-semibold">Triggered Factors:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {prediction.triggered_factors.map((factor, index) => (
+                            <Badge key={index} variant="destructive" className="bg-ml-warning text-white">
+                              {factor}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                   
                   <Separator className="bg-white/20" />
                   
